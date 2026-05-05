@@ -18,6 +18,20 @@ flowchart LR
   SQS --> DLQ[SQS DLQ]
 ```
 
+## Screenshots
+
+### Capability Report
+
+![Content ID platform capability report](docs/screenshots/capability-report.png)
+
+### API Surface
+
+![Swagger API endpoints](docs/screenshots/swagger-api.png)
+
+### Match Result
+
+![Matched result JSON response](docs/screenshots/matched-result-json.png)
+
 ## Local Quickstart
 
 ```bash
