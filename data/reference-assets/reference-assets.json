@@ -1,0 +1,23 @@
+[
+  {
+    "referenceAssetId": "ref-001",
+    "title": "Sample Song A",
+    "owner": "Example Music Group",
+    "fingerprintHash": "abc123",
+    "rightsPolicy": "monetize"
+  },
+  {
+    "referenceAssetId": "ref-002",
+    "title": "Sample Clip B",
+    "owner": "Example Studio",
+    "fingerprintHash": "def456",
+    "rightsPolicy": "block"
+  },
+  {
+    "referenceAssetId": "ref-003",
+    "title": "Podcast Theme C",
+    "owner": "Independent Publisher Collective",
+    "fingerprintHash": "theme789",
+    "rightsPolicy": "track"
+  }
+]

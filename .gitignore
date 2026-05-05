@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+.idea/
+.vscode/
+
+.terraform/
+*.tfstate
+*.tfstate.*
+
+.DS_Store
+*.log

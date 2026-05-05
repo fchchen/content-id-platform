@@ -1,0 +1,20 @@
+@ContentId.Api_HostAddress = http://localhost:18080
+
+POST {{ContentId.Api_HostAddress}}/v1/submissions
+Content-Type: application/json
+
+{
+  "title": "Interview Demo Track",
+  "sourcePlatform": "PartnerUpload",
+  "contentType": "audio",
+  "durationSeconds": 191,
+  "fingerprintHash": "abc123"
+}
+
+###
+
+GET {{ContentId.Api_HostAddress}}/health
+
+###
+
+GET {{ContentId.Api_HostAddress}}/metrics

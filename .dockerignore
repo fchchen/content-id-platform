@@ -1,0 +1,8 @@
+.git
+.codex
+.agents
+**/bin
+**/obj
+.terraform
+*.tfstate
+*.tfstate.*
