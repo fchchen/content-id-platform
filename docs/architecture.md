@@ -26,6 +26,8 @@ LocalStack creates:
 
 The queue uses `maxReceiveCount = 3`. If the worker fails a message three times, SQS moves it to the DLQ for inspection and replay.
 
+The API writes submission state before publishing the queue message. A production platform would usually use a transactional outbox or an `enqueue_failed` recovery workflow so a transient queue outage cannot leave a job orphaned. This demo keeps that tradeoff visible rather than adding a full outbox implementation.
+
 ## Observability
 
 The API and worker emit OpenTelemetry traces to the collector. The collector writes traces to its debug exporter and exposes a Prometheus metrics endpoint on port `8889`.
@@ -40,3 +42,4 @@ The API and worker emit OpenTelemetry traces to the collector. The collector wri
 - rate limiting
 - full CI/CD deployment
 - production secrets management
+- transactional outbox for exactly-once enqueue recovery

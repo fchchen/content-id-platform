@@ -10,4 +10,5 @@ WORKDIR /app
 COPY --from=build /app/publish .
 COPY data/reference-assets ./data/reference-assets
 EXPOSE 8080
+USER $APP_UID
 ENTRYPOINT ["dotnet", "ContentId.Api.dll"]

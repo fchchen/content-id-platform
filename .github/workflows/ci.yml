@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test API
+        run: dotnet test ContentIdPlatform.slnx --configuration Release
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: src/content-match-worker-go/go.mod
+
+      - name: Test worker
+        working-directory: src/content-match-worker-go
+        run: go test ./...
+
+      - name: Build Compose images
+        run: docker compose build

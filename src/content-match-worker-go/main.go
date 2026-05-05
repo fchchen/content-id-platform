@@ -22,11 +22,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+)
+
+const (
+	sqsMaxMessages       = int32(5)
+	sqsLongPollSeconds   = int32(10)
+	sqsVisibilitySeconds = int32(30)
+	receiveBackoff       = 2 * time.Second
+	queryTimeout         = 5 * time.Second
+
+	exactMatchConfidence = 0.99
+	fuzzyMatchConfidence = 0.72
+	// The demo fuzzy matcher uses a conservative shared-prefix floor to show near-match behavior
+	// without pretending to be a real audio fingerprinting algorithm.
+	fuzzyPrefixThreshold = 0.65
 )
 
 type identificationJobMessage struct {
@@ -56,7 +71,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	shutdown, err := configureTracing(ctx)
 	if err != nil {
 		logger.Warn("tracing disabled", "error", err)
@@ -77,6 +92,10 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
+	if err := db.PingContext(ctx); err != nil {
+		logger.Error("failed to ping postgres", "error", err)
+		os.Exit(1)
+	}
 
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoConnectionString))
 	if err != nil {
@@ -95,13 +114,13 @@ func main() {
 	for ctx.Err() == nil {
 		output, err := sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 			QueueUrl:            aws.String(queueURL),
-			MaxNumberOfMessages: 5,
-			WaitTimeSeconds:     10,
-			VisibilityTimeout:   30,
+			MaxNumberOfMessages: sqsMaxMessages,
+			WaitTimeSeconds:     sqsLongPollSeconds,
+			VisibilityTimeout:   sqsVisibilitySeconds,
 		})
 		if err != nil {
 			logger.Warn("receive failed", "error", err)
-			time.Sleep(2 * time.Second)
+			time.Sleep(receiveBackoff)
 			continue
 		}
 
@@ -110,7 +129,7 @@ func main() {
 				continue
 			}
 
-			if err := processMessage(ctx, logger, db, mongoClient, assets, *message.Body); err != nil {
+			if err := processMessage(ctx, logger, db, mongoClient, cfg, assets, *message.Body); err != nil {
 				logger.Error("job failed; message will be retried by sqs", "error", err)
 				continue
 			}
@@ -195,6 +214,7 @@ func processMessage(
 	logger *slog.Logger,
 	db *sql.DB,
 	mongoClient *mongo.Client,
+	cfg appConfig,
 	assets []referenceAsset,
 	body string,
 ) error {
@@ -209,8 +229,15 @@ func processMessage(
 	if message.SubmissionID == "" {
 		return errors.New("missing submissionId")
 	}
+	logger = logger.With("submission_id", message.SubmissionID)
+	span.SetAttributes(
+		attribute.String("submission.id", message.SubmissionID),
+		attribute.String("fingerprint.hash", strings.ToLower(message.FingerprintHash)),
+	)
 
-	if _, err := db.ExecContext(ctx,
+	queryCtx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+	if _, err := db.ExecContext(queryCtx,
 		"update submissions set status = 'processing', updated_at = now() where submission_id = $1",
 		message.SubmissionID); err != nil {
 		return err
@@ -226,14 +253,18 @@ func processMessage(
 		return err
 	}
 
-	if _, err := db.ExecContext(ctx,
+	statusCtx, statusCancel := context.WithTimeout(ctx, queryTimeout)
+	defer statusCancel()
+	if _, err := db.ExecContext(statusCtx,
 		"update submissions set status = $1, updated_at = now() where submission_id = $2",
 		status, message.SubmissionID); err != nil {
 		return err
 	}
 
-	collection := mongoClient.Database(env("MONGO_DATABASE", "contentid")).Collection("match_documents")
-	_, err := collection.InsertOne(ctx, bson.M{
+	mongoCtx, mongoCancel := context.WithTimeout(ctx, queryTimeout)
+	defer mongoCancel()
+	collection := mongoClient.Database(cfg.MongoDatabase).Collection("match_documents")
+	_, err := collection.InsertOne(mongoCtx, bson.M{
 		"submissionId":    message.SubmissionID,
 		"fingerprintHash": strings.ToLower(message.FingerprintHash),
 		"status":          status,
@@ -258,19 +289,19 @@ func findMatches(fingerprintHash string, assets []referenceAsset) []matchResult 
 				Title:            asset.Title,
 				Owner:            asset.Owner,
 				RightsPolicy:     asset.RightsPolicy,
-				Confidence:       0.99,
+				Confidence:       exactMatchConfidence,
 				FingerprintHash:  asset.FingerprintHash,
 			})
 			continue
 		}
 
-		if prefixSimilarity(normalized, strings.ToLower(asset.FingerprintHash)) >= 0.65 {
+		if prefixSimilarity(normalized, strings.ToLower(asset.FingerprintHash)) >= fuzzyPrefixThreshold {
 			results = append(results, matchResult{
 				ReferenceAssetID: asset.ReferenceAssetID,
 				Title:            asset.Title,
 				Owner:            asset.Owner,
 				RightsPolicy:     asset.RightsPolicy,
-				Confidence:       0.72,
+				Confidence:       fuzzyMatchConfidence,
 				FingerprintHash:  asset.FingerprintHash,
 			})
 		}
@@ -296,12 +327,19 @@ func prefixSimilarity(left, right string) float64 {
 
 func writeMatches(ctx context.Context, db *sql.DB, submissionID string, matches []matchResult) error {
 	for _, match := range matches {
-		_, err := db.ExecContext(ctx,
+		queryCtx, cancel := context.WithTimeout(ctx, queryTimeout)
+		defer cancel()
+		_, err := db.ExecContext(queryCtx,
 			`insert into match_results (
 				submission_id, reference_asset_id, title, owner, rights_policy, confidence, fingerprint_hash)
 			 values ($1, $2, $3, $4, $5, $6, $7)
 			 on conflict (submission_id, reference_asset_id)
-			 do update set confidence = excluded.confidence`,
+			 do update set
+				title = excluded.title,
+				owner = excluded.owner,
+				rights_policy = excluded.rights_policy,
+				confidence = excluded.confidence,
+				fingerprint_hash = excluded.fingerprint_hash`,
 			submissionID,
 			match.ReferenceAssetID,
 			match.Title,

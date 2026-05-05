@@ -37,6 +37,32 @@ resource "aws_s3_bucket" "media_scratch" {
   tags   = local.tags
 }
 
+resource "aws_s3_bucket_public_access_block" "media_scratch" {
+  bucket                  = aws_s3_bucket.media_scratch.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "media_scratch" {
+  bucket = aws_s3_bucket.media_scratch.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "media_scratch" {
+  bucket = aws_s3_bucket.media_scratch.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/ecs/${local.name_prefix}/api"
   retention_in_days = 30

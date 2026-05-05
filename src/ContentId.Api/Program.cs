@@ -7,6 +7,7 @@ using ContentId.Api;
 using ContentId.Api.Infrastructure;
 using ContentId.Api.Models;
 using ContentId.Api.Services;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Npgsql;
@@ -297,19 +298,19 @@ namespace ContentId.Api.Services
         }
     }
 
-    public sealed class JsonReferenceAssetCatalog(IConfiguration configuration, IWebHostEnvironment environment)
+    public sealed class JsonReferenceAssetCatalog(IOptions<ContentIdOptions> options, IWebHostEnvironment environment)
         : IReferenceAssetCatalog
     {
         public async Task<IReadOnlyCollection<ReferenceAsset>> GetReferenceAssetsAsync(CancellationToken cancellationToken)
         {
-            var options = configuration.GetSection(ContentIdOptions.SectionName).Get<ContentIdOptions>() ?? new();
-            var path = Path.IsPathRooted(options.ReferenceAssetsPath)
-                ? options.ReferenceAssetsPath
-                : Path.Combine(environment.ContentRootPath, options.ReferenceAssetsPath);
+            var settings = options.Value;
+            var path = Path.IsPathRooted(settings.ReferenceAssetsPath)
+                ? settings.ReferenceAssetsPath
+                : Path.Combine(environment.ContentRootPath, settings.ReferenceAssetsPath);
 
             if (!File.Exists(path))
             {
-                path = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "..", "..", options.ReferenceAssetsPath));
+                path = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "..", "..", settings.ReferenceAssetsPath));
             }
 
             if (!File.Exists(path))
@@ -333,12 +334,11 @@ namespace ContentId.Api.Infrastructure
         Task InitializeAsync();
     }
 
-    public sealed class PostgresStorageInitializer(IConfiguration configuration) : IStorageInitializer
+    public sealed class PostgresStorageInitializer(IOptions<ContentIdOptions> options) : IStorageInitializer
     {
         public async Task InitializeAsync()
         {
-            var options = configuration.GetSection(ContentIdOptions.SectionName).Get<ContentIdOptions>() ?? new();
-            await using var connection = new NpgsqlConnection(options.PostgresConnectionString);
+            await using var connection = new NpgsqlConnection(options.Value.PostgresConnectionString);
             await connection.OpenAsync();
             await using var command = connection.CreateCommand();
             command.CommandText =
@@ -375,14 +375,11 @@ namespace ContentId.Api.Infrastructure
         public Task InitializeAsync() => Task.CompletedTask;
     }
 
-    public sealed class PostgresSubmissionRepository(IConfiguration configuration) : ISubmissionRepository
+    public sealed class PostgresSubmissionRepository(IOptions<ContentIdOptions> options) : ISubmissionRepository
     {
-        private ContentIdOptions Options =>
-            configuration.GetSection(ContentIdOptions.SectionName).Get<ContentIdOptions>() ?? new();
-
         public async Task CreateAsync(SubmissionResponse submission, CancellationToken cancellationToken)
         {
-            await using var connection = new NpgsqlConnection(Options.PostgresConnectionString);
+            await using var connection = new NpgsqlConnection(options.Value.PostgresConnectionString);
             await connection.OpenAsync(cancellationToken);
             await using var command = connection.CreateCommand();
             command.CommandText =
@@ -422,7 +419,7 @@ namespace ContentId.Api.Infrastructure
 
         public async Task<SubmissionResponse?> GetAsync(Guid submissionId, CancellationToken cancellationToken)
         {
-            await using var connection = new NpgsqlConnection(Options.PostgresConnectionString);
+            await using var connection = new NpgsqlConnection(options.Value.PostgresConnectionString);
             await connection.OpenAsync(cancellationToken);
             await using var command = connection.CreateCommand();
             command.CommandText =
@@ -454,7 +451,7 @@ namespace ContentId.Api.Infrastructure
 
         public async Task<IReadOnlyCollection<MatchResult>?> GetMatchesAsync(Guid submissionId, CancellationToken cancellationToken)
         {
-            await using var connection = new NpgsqlConnection(Options.PostgresConnectionString);
+            await using var connection = new NpgsqlConnection(options.Value.PostgresConnectionString);
             await connection.OpenAsync(cancellationToken);
             await using var command = connection.CreateCommand();
             command.CommandText =
@@ -483,15 +480,12 @@ namespace ContentId.Api.Infrastructure
         }
     }
 
-    public sealed class MongoFingerprintDocumentStore(IConfiguration configuration) : IFingerprintDocumentStore
+    public sealed class MongoFingerprintDocumentStore(IOptions<ContentIdOptions> options) : IFingerprintDocumentStore
     {
-        private ContentIdOptions Options =>
-            configuration.GetSection(ContentIdOptions.SectionName).Get<ContentIdOptions>() ?? new();
-
         public async Task StoreSubmissionDocumentAsync(SubmissionResponse submission, CancellationToken cancellationToken)
         {
-            var client = new MongoClient(Options.MongoConnectionString);
-            var database = client.GetDatabase(Options.MongoDatabase);
+            var client = new MongoClient(options.Value.MongoConnectionString);
+            var database = client.GetDatabase(options.Value.MongoDatabase);
             var collection = database.GetCollection<BsonDocument>("fingerprint_documents");
             var document = new BsonDocument
             {
@@ -509,24 +503,23 @@ namespace ContentId.Api.Infrastructure
         }
     }
 
-    public sealed class SqsIdentificationQueue(IConfiguration configuration) : IIdentificationQueue
+    public sealed class SqsIdentificationQueue(IOptions<ContentIdOptions> options) : IIdentificationQueue
     {
-        private ContentIdOptions Options =>
-            configuration.GetSection(ContentIdOptions.SectionName).Get<ContentIdOptions>() ?? new();
-
         public async Task EnqueueAsync(IdentificationJobMessage message, CancellationToken cancellationToken)
         {
-            var options = Options;
+            var settings = options.Value;
+            // LocalStack accepts static placeholder credentials. A production AWS endpoint should use
+            // the default credential chain via an IAM role or environment-provided credentials.
             using var client = new AmazonSQSClient(
                 new BasicAWSCredentials("test", "test"),
                 new AmazonSQSConfig
                 {
-                    ServiceURL = options.AwsServiceUrl,
-                    AuthenticationRegion = options.AwsRegion,
-                    UseHttp = options.AwsServiceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                    ServiceURL = settings.AwsServiceUrl,
+                    AuthenticationRegion = settings.AwsRegion,
+                    UseHttp = settings.AwsServiceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
                 });
 
-            var queueUrl = await client.GetQueueUrlAsync(options.QueueName, cancellationToken);
+            var queueUrl = await client.GetQueueUrlAsync(settings.QueueName, cancellationToken);
             await client.SendMessageAsync(new SendMessageRequest
             {
                 QueueUrl = queueUrl.QueueUrl,
@@ -537,8 +530,8 @@ namespace ContentId.Api.Infrastructure
 
     public sealed class InMemoryContentStore : ISubmissionRepository, IFingerprintDocumentStore
     {
-        private readonly Dictionary<Guid, SubmissionResponse> _submissions = [];
-        private readonly Dictionary<Guid, IReadOnlyCollection<MatchResult>> _matches = [];
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, SubmissionResponse> _submissions = [];
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IReadOnlyCollection<MatchResult>> _matches = [];
 
         public Task CreateAsync(SubmissionResponse submission, CancellationToken cancellationToken)
         {
@@ -581,7 +574,13 @@ namespace ContentId.Api.Infrastructure
             try
             {
                 await submissions.GetAsync(Guid.Empty, cancellationToken);
-                await referenceAssets.GetReferenceAssetsAsync(cancellationToken);
+                var assets = await referenceAssets.GetReferenceAssetsAsync(cancellationToken);
+                if (assets.Count == 0)
+                {
+                    return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(
+                        "Reference asset catalog is empty.");
+                }
+
                 return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy();
             }
             catch (Exception ex)

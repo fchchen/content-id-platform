@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-awslocal sqs create-queue --queue-name content-id-job-dlq >/tmp/content-id-dlq.json
+DLQ_URL="$(awslocal sqs create-queue \
+  --queue-name content-id-job-dlq \
+  --query 'QueueUrl' \
+  --output text)"
 DLQ_ARN="$(awslocal sqs get-queue-attributes \
-  --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/content-id-job-dlq \
+  --queue-url "${DLQ_URL}" \
   --attribute-names QueueArn \
   --query 'Attributes.QueueArn' \
   --output text)"
