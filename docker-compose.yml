@@ -76,6 +76,15 @@ services:
       - ./observability/loki-config.yml:/etc/loki/config.yaml:ro
     logging: *default-logging
 
+  prometheus:
+    image: prom/prometheus:latest
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - otel-collector
+    logging: *default-logging
+
   grafana:
     image: grafana/grafana:latest
     environment:
@@ -88,7 +97,7 @@ services:
     depends_on:
       - tempo
       - loki
-      - otel-collector
+      - prometheus
     logging: *default-logging
 
   otel-collector:

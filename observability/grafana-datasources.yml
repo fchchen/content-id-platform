@@ -3,7 +3,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     uid: prometheus
-    url: http://otel-collector:8889
+    url: http://prometheus:9090
     isDefault: true
 
   - name: Tempo

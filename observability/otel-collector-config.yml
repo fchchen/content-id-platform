@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=
 receivers:
   otlp:
     protocols:
@@ -9,6 +8,11 @@ receivers:
 
 processors:
   batch: {}
+  resource/loki:
+    attributes:
+      - action: insert
+        key: loki.resource.labels
+        value: service.name
 
 exporters:
   debug:
@@ -34,5 +38,5 @@ service:
       exporters: [prometheus]
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [resource/loki, batch]
       exporters: [debug, loki]

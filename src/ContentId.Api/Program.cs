@@ -53,10 +53,14 @@ builder.Services.AddOpenTelemetry()
         metrics.AddMeter("Microsoft.AspNetCore.Hosting");
         metrics.AddMeter("ContentId.Api");
         metrics.AddOtlpExporter();
-    })
-    .WithLogging(logging => logging.AddOtlpExporter());
+    });
 
-builder.Logging.AddOpenTelemetry(options => options.IncludeFormattedMessage = true);
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("content-id-api"));
+    options.IncludeFormattedMessage = true;
+    options.AddOtlpExporter();
+});
 
 var app = builder.Build();
 
