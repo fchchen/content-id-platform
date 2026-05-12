@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=
 receivers:
   otlp:
     protocols:
@@ -7,7 +8,7 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
-  batch:
+  batch: {}
 
 exporters:
   debug:
@@ -25,3 +26,7 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

@@ -1,4 +1,4 @@
-FROM golang:1.23 AS build
+FROM golang:1.25 AS build
 WORKDIR /src
 COPY src/content-match-worker-go/go.mod src/content-match-worker-go/
 WORKDIR /src/src/content-match-worker-go

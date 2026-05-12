@@ -3,6 +3,7 @@ using ContentId.Api;
 using ContentId.Api.Infrastructure;
 using ContentId.Api.Models;
 using ContentId.Api.Services;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -40,7 +41,10 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource("ContentId.Api");
         tracing.AddAspNetCoreInstrumentation();
         tracing.AddOtlpExporter();
-    });
+    })
+    .WithLogging(logging => logging.AddOtlpExporter());
+
+builder.Logging.AddOpenTelemetry(options => options.IncludeFormattedMessage = true);
 
 var app = builder.Build();
 

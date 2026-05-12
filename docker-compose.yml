@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -11,6 +17,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    logging: *default-logging
 
   sqlserver-init:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -25,16 +32,19 @@ services:
         "-c",
         "/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"if db_id(N'contentid') is null create database contentid;\" -C -b"
       ]
+    logging: *default-logging
 
   mongodb:
     image: mongo:7
     ports:
       - "27018:27017"
+    command: ["mongod", "--quiet"]
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 5s
+      interval: 30s
       timeout: 3s
-      retries: 20
+      retries: 10
+    logging: *default-logging
 
   localstack:
     image: localstack/localstack:3.8
@@ -50,16 +60,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    logging: *default-logging
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.114.0
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
-      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+      - ./observability/otel-collector-config.yml:/etc/otelcol/config.yaml:ro
     ports:
       - "14317:4317"
       - "14318:4318"
       - "18889:8889"
+    logging: *default-logging
 
   contentid-api:
     build:
@@ -86,6 +98,7 @@ services:
         condition: service_healthy
       otel-collector:
         condition: service_started
+    logging: *default-logging
 
   content-match-worker-go:
     build:
@@ -106,3 +119,4 @@ services:
         condition: service_healthy
       otel-collector:
         condition: service_started
+    logging: *default-logging

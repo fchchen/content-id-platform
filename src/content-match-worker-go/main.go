@@ -34,7 +34,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger, shutdownLogs, err := configureLogging(ctx)
+	if err != nil {
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		logger.Warn("otel logging disabled, falling back to stdout", "error", err)
+	} else {
+		defer shutdownLogs(context.Background())
+	}
+
 	shutdown, err := configureTracing(ctx)
 	if err != nil {
 		logger.Warn("tracing disabled", "error", err)
