@@ -1,17 +1,30 @@
 services:
-  postgres:
-    image: postgres:16
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      POSTGRES_DB: contentid
-      POSTGRES_USER: contentid
-      POSTGRES_PASSWORD: contentid
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ContentId_local_2026!
     ports:
-      - "15432:5432"
+      - "11433:1433"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U contentid -d contentid"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"select 1\" -C -b"]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 20
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ContentId_local_2026!
+    command:
+      [
+        "bash",
+        "-c",
+        "/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"if db_id(N'contentid') is null create database contentid;\" -C -b"
+      ]
 
   mongodb:
     image: mongo:7
@@ -55,7 +68,7 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Development
-      ContentId__PostgresConnectionString: Host=postgres;Port=5432;Username=contentid;Password=contentid;Database=contentid
+      ContentId__SqlServerConnectionString: Server=sqlserver,1433;Database=contentid;User Id=sa;Password=ContentId_local_2026!;Encrypt=True;TrustServerCertificate=True
       ContentId__MongoConnectionString: mongodb://mongodb:27017
       ContentId__MongoDatabase: contentid
       ContentId__QueueName: content-id-job-queue
@@ -65,8 +78,8 @@ services:
     ports:
       - "18080:8080"
     depends_on:
-      postgres:
-        condition: service_healthy
+      sqlserver-init:
+        condition: service_completed_successfully
       mongodb:
         condition: service_healthy
       localstack:
@@ -79,7 +92,7 @@ services:
       context: .
       dockerfile: src/content-match-worker-go/Dockerfile
     environment:
-      POSTGRES_CONNECTION_STRING: postgres://contentid:contentid@postgres:5432/contentid?sslmode=disable
+      SQLSERVER_CONNECTION_STRING: sqlserver://sa:ContentId_local_2026!@sqlserver:1433?database=contentid&encrypt=true&TrustServerCertificate=true
       MONGO_CONNECTION_STRING: mongodb://mongodb:27017
       MONGO_DATABASE: contentid
       QUEUE_NAME: content-id-job-queue

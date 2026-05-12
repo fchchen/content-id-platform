@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>ContentId.Api — API Surface</title>
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --border: #e0e0e0;
+        --muted: #6b7280;
+        --ink: #1a1a2e;
+        --header-bg: #1a1a2e;
+        --header-text: #ffffff;
+        --post-bg: #ebf3eb;
+        --post-border: #49cc90;
+        --post-method: #49cc90;
+        --post-text: #1a3a1a;
+        --get-bg: #e8f0fb;
+        --get-border: #61affe;
+        --get-method: #61affe;
+        --get-text: #1a2a4a;
+        --schema-bg: #f9f9f9;
+        --tag-bg: #e8e8e8;
+        --tag-text: #333;
+        --oas-green: #49cc90;
+        --oas-blue: #89b4d5;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      /* Top bar */
+      .topbar {
+        background: var(--header-bg);
+        padding: 10px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .topbar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .swagger-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--oas-green);
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 18px;
+        color: #fff;
+        font-style: italic;
+      }
+
+      .topbar-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.3px;
+      }
+
+      .topbar-subtitle {
+        font-size: 11px;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 2px;
+      }
+
+      .select-def {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #ccc;
+      }
+
+      .def-select {
+        background: #333;
+        border: 1px solid #555;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 13px;
+        min-width: 180px;
+      }
+
+      /* Main content */
+      .content {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 24px 20px;
+      }
+
+      /* API title block */
+      .api-title-block {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        padding: 18px 22px;
+        margin-bottom: 20px;
+      }
+
+      .api-title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .api-name {
+        font-size: 26px;
+        font-weight: 700;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .badge-version { background: #89b4d5; color: #fff; }
+      .badge-oas { background: var(--oas-green); color: #fff; }
+
+      .api-server {
+        font-size: 12px;
+        color: var(--oas-blue);
+        margin-top: 4px;
+      }
+
+      /* Tag section */
+      .tag-section {
+        margin-bottom: 8px;
+      }
+
+      .tag-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #e8edf3;
+        border: 1px solid var(--border);
+        border-radius: 4px 4px 0 0;
+        padding: 12px 18px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .tag-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .chevron {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      /* Endpoint rows */
+      .endpoint {
+        border: 1px solid var(--border);
+        border-top: none;
+        margin-bottom: 0;
+      }
+
+      .endpoint:last-child {
+        border-radius: 0 0 4px 4px;
+      }
+
+      .endpoint-header {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding: 0;
+        min-height: 50px;
+      }
+
+      .endpoint-header.post { background: var(--post-bg); border-left: 4px solid var(--post-border); }
+      .endpoint-header.get  { background: var(--get-bg);  border-left: 4px solid var(--get-border); }
+
+      .method-badge {
+        display: inline-block;
+        min-width: 80px;
+        text-align: center;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        border-radius: 3px;
+        margin: 10px 14px 10px 16px;
+        letter-spacing: 0.02em;
+      }
+
+      .method-badge.post { background: var(--post-method); color: #fff; }
+      .method-badge.get  { background: var(--get-method);  color: #fff; }
+
+      .endpoint-path {
+        font-size: 15px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-weight: 600;
+        flex: 1;
+        padding: 10px 0;
+      }
+
+      .endpoint-path.post { color: var(--post-text); }
+      .endpoint-path.get  { color: var(--get-text);  }
+
+      .endpoint-desc {
+        font-size: 13px;
+        color: var(--muted);
+        padding-right: 16px;
+        padding-left: 10px;
+        max-width: 300px;
+      }
+
+      .endpoint-lock {
+        padding-right: 14px;
+        font-size: 16px;
+        color: #bbb;
+      }
+
+      /* Schemas */
+      .schemas-section {
+        margin-top: 24px;
+      }
+
+      .schemas-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #e8edf3;
+        border: 1px solid var(--border);
+        border-radius: 4px 4px 0 0;
+        padding: 12px 18px;
+      }
+
+      .schemas-title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .schema-row {
+        border: 1px solid var(--border);
+        border-top: none;
+        background: var(--surface);
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 0 0 4px 4px;
+      }
+
+      .schema-name {
+        font-size: 14px;
+        font-weight: 600;
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      .schema-fields {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+        line-height: 1.8;
+        font-family: "SFMono-Regular", Consolas, monospace;
+      }
+
+      .field-type {
+        color: #999;
+        margin-left: 4px;
+      }
+
+      .required-star {
+        color: #e74c3c;
+        margin-left: 2px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="topbar">
+      <div class="topbar-logo">
+        <div class="swagger-icon">/</div>
+        <div>
+          <div class="topbar-title">Swagger UI</div>
+          <div class="topbar-subtitle">Supported by Smartbear</div>
+        </div>
+      </div>
+      <div class="select-def">
+        <span>Select a definition</span>
+        <select class="def-select">
+          <option>ContentId.Api v1</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="api-title-block">
+        <div class="api-title-row">
+          <span class="api-name">ContentId.Api</span>
+          <span class="badge badge-version">1.0</span>
+          <span class="badge badge-oas">OAS 3.0</span>
+        </div>
+        <div class="api-server">http://localhost:18080/swagger/v1/swagger.json</div>
+      </div>
+
+      <!-- ContentId.Api tag group -->
+      <div class="tag-section">
+        <div class="tag-header">
+          <span class="tag-name">ContentId.Api</span>
+          <span class="chevron">&#8743;</span>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header get">
+            <span class="method-badge get">GET</span>
+            <span class="endpoint-path get">/metrics</span>
+            <span class="endpoint-desc">Prometheus-format service metadata gauge</span>
+            <span class="endpoint-lock">🔓</span>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header post">
+            <span class="method-badge post">POST</span>
+            <span class="endpoint-path post">/v1/submissions</span>
+            <span class="endpoint-desc">Submit media fingerprint for identification</span>
+            <span class="endpoint-lock">🔓</span>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header get">
+            <span class="method-badge get">GET</span>
+            <span class="endpoint-path get">/v1/submissions/{id}</span>
+            <span class="endpoint-desc">Retrieve submission status by ID</span>
+            <span class="endpoint-lock">🔓</span>
+          </div>
+        </div>
+
+        <div class="endpoint">
+          <div class="endpoint-header get">
+            <span class="method-badge get">GET</span>
+            <span class="endpoint-path get">/v1/submissions/{id}/matches</span>
+            <span class="endpoint-desc">Retrieve match results for a submission</span>
+            <span class="endpoint-lock">🔓</span>
+          </div>
+        </div>
+
+        <div class="endpoint" style="border-radius:0 0 4px 4px;">
+          <div class="endpoint-header get">
+            <span class="method-badge get">GET</span>
+            <span class="endpoint-path get">/health</span>
+            <span class="endpoint-desc">Dependency health check (SQL Server, MongoDB, catalog)</span>
+            <span class="endpoint-lock">🔓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schemas -->
+      <div class="schemas-section">
+        <div class="schemas-header">
+          <span class="schemas-title">Schemas</span>
+          <span class="chevron">&#8743;</span>
+        </div>
+        <div class="schema-row">
+          <div>
+            <div class="schema-name">CreateSubmissionRequest</div>
+            <div class="schema-fields">
+              title<span class="field-type">string</span><span class="required-star">*</span>&nbsp;&nbsp;
+              sourcePlatform<span class="field-type">string</span><span class="required-star">*</span>&nbsp;&nbsp;
+              contentType<span class="field-type">string (audio|video)</span><span class="required-star">*</span>&nbsp;&nbsp;
+              durationSeconds<span class="field-type">integer</span><span class="required-star">*</span>&nbsp;&nbsp;
+              fingerprintHash<span class="field-type">string</span><span class="required-star">*</span>
+            </div>
+          </div>
+          <span class="chevron">&#8250;</span>
+        </div>
+      </div>
+
+    </div>
+  </body>
+</html>

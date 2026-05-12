@@ -1,18 +1,18 @@
 # Content ID Platform
 
-A simplified content identification platform inspired by high-volume automatic content recognition systems. The project demonstrates a .NET API, Go match worker, asynchronous queue processing, PostgreSQL, MongoDB, LocalStack-backed AWS resources, OpenTelemetry, OpenTofu-style infrastructure, and Python automation.
+A simplified content identification platform inspired by high-volume automatic content recognition systems. The project demonstrates a .NET API, Go match worker, asynchronous queue processing, SQL Server, MongoDB, LocalStack-backed AWS resources, OpenTelemetry, OpenTofu-style infrastructure, and Python automation.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   Client --> API[ContentId.Api]
-  API --> PG[(PostgreSQL)]
+  API --> SQL[(SQL Server)]
   API --> Mongo[(MongoDB)]
   API --> SQS[SQS Job Queue]
   SQS --> Worker[Go Match Worker]
   Worker --> Mongo
-  Worker --> PG
+  Worker --> SQL
   API --> OTel[OpenTelemetry Collector]
   Worker --> OTel
   SQS --> DLQ[SQS DLQ]
@@ -71,7 +71,7 @@ Useful endpoints:
 - C#/.NET platform API for submission intake and result retrieval.
 - Go worker for asynchronous content matching.
 - SQS queue plus DLQ for retryable background processing.
-- PostgreSQL for normalized job state and match summaries.
+- SQL Server for normalized job state and match summaries.
 - MongoDB for flexible fingerprint and raw match documents.
 - LocalStack for local AWS SQS, SNS, and S3 resources.
 - OpenTelemetry traces from API and worker.
@@ -80,7 +80,7 @@ Useful endpoints:
 
 ## JD Alignment
 
-This repo maps directly to backend/platform responsibilities in the target role: scalable APIs, async processing, C#/.NET, Go, MongoDB, PostgreSQL, AWS messaging, Docker Compose, IaC, observability, Python scripting, production runbooks, and clear developer documentation.
+This repo maps directly to backend/platform responsibilities in the target role: scalable APIs, async processing, C#/.NET, Go, MongoDB, SQL Server, AWS messaging, Docker Compose, IaC, observability, Python scripting, production runbooks, and clear developer documentation.
 
 See:
 

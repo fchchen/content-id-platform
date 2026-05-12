@@ -13,7 +13,13 @@
         --panel: #f7f9fb;
         --accent: #0f766e;
         --accent-2: #8a5a16;
+        --pass-bg: #dcfce7;
+        --pass: #166534;
+        --warn-bg: #fef3c7;
+        --warn: #92400e;
       }
+
+      * { box-sizing: border-box; }
 
       body {
         margin: 0;
@@ -23,103 +29,97 @@
       }
 
       main {
-        max-width: 1180px;
+        max-width: 1100px;
         margin: 0 auto;
-        padding: 44px 48px;
+        padding: 40px 44px;
       }
 
       h1 {
-        margin: 0 0 10px;
-        font-size: 34px;
+        margin: 0 0 8px;
+        font-size: 32px;
         font-weight: 750;
+        letter-spacing: -0.5px;
       }
 
       .subtitle {
-        margin: 0 0 28px;
+        margin: 0 0 26px;
         color: var(--muted);
-        font-size: 17px;
+        font-size: 15px;
         line-height: 1.5;
       }
 
       .grid {
         display: grid;
-        grid-template-columns: 1.1fr 0.9fr;
-        gap: 22px;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
       }
 
       section {
         border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--panel);
-        padding: 22px;
+        padding: 20px 22px;
       }
 
       h2 {
-        margin: 0 0 16px;
-        font-size: 18px;
-      }
-
-      .flow {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        margin: 0 0 14px;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
         gap: 10px;
       }
 
+      /* ── Flow ── */
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+
       .step {
-        min-height: 82px;
         border: 1px solid var(--line);
-        border-radius: 8px;
-        background: #ffffff;
-        padding: 12px;
+        border-radius: 6px;
+        background: #fff;
+        padding: 10px 10px 12px;
       }
 
       .step strong {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         color: var(--accent);
-        font-size: 14px;
+        font-size: 13px;
       }
 
       .step span {
         color: var(--muted);
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.35;
       }
 
+      /* ── Services ── */
       dl {
         display: grid;
-        grid-template-columns: 170px 1fr;
-        gap: 11px 16px;
+        grid-template-columns: 140px 1fr;
+        gap: 9px 14px;
         margin: 0;
       }
 
-      dt {
-        color: var(--muted);
-      }
-
-      dd {
-        margin: 0;
-        font-weight: 650;
-      }
+      dt { color: var(--muted); font-size: 13px; }
+      dd { margin: 0; font-weight: 650; font-size: 13px; }
 
       code {
         font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-        font-size: 13px;
+        font-size: 12px;
       }
 
-      .result {
-        margin-top: 22px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 22px;
-      }
-
+      /* ── Result ── */
       pre {
-        overflow: hidden;
         margin: 0;
         white-space: pre-wrap;
-        line-height: 1.45;
-        font-size: 13px;
+        line-height: 1.5;
+        font-size: 12.5px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       }
 
       .badge {
@@ -127,74 +127,179 @@
         border-radius: 999px;
         background: #e7f6f3;
         color: var(--accent);
-        padding: 4px 10px;
+        padding: 3px 9px;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 12px;
       }
 
-      .policy {
-        color: var(--accent-2);
+      .badge-no-match {
+        display: inline-block;
+        border-radius: 999px;
+        background: var(--warn-bg);
+        color: var(--warn);
+        padding: 3px 9px;
+        font-weight: 700;
+        font-size: 12px;
       }
+
+      .pass-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 999px;
+        background: var(--pass-bg);
+        color: var(--pass);
+        padding: 2px 8px;
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      .policy { color: var(--accent-2); }
+
+      .result-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .result-col-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      /* ── Tests & CI ── */
+      .test-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .test-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+      .test-desc {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+        line-height: 1.4;
+      }
+
+      .ci-row {
+        display: flex;
+        gap: 12px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+        align-items: center;
+      }
+      .ci-row:last-child { border-bottom: none; }
+      .ci-label { color: var(--muted); min-width: 130px; font-size: 12px; }
+      .ci-val { font-weight: 650; font-size: 12px; }
     </style>
   </head>
   <body>
     <main>
-      <h1>Content ID Platform Capability Report</h1>
+      <h1>Content ID Platform — Capability Report</h1>
       <p class="subtitle">
-        Local demo stack showing .NET API intake, SQS-backed async processing, Go matching worker,
-        PostgreSQL/MongoDB persistence, LocalStack AWS resources, and OpenTelemetry collection.
+        .NET 8 API &nbsp;·&nbsp; Go 1.23 worker &nbsp;·&nbsp; SQS async processing &nbsp;·&nbsp;
+        SQL Server + MongoDB &nbsp;·&nbsp; LocalStack &nbsp;·&nbsp; OpenTelemetry &nbsp;·&nbsp; GitHub Actions CI
       </p>
 
       <div class="grid">
+
+        <!-- ── End-to-End Flow ── -->
         <section>
           <h2>End-to-End Flow</h2>
           <div class="flow">
-            <div class="step"><strong>1. Submit</strong><span>Client posts media metadata and simulated fingerprint.</span></div>
-            <div class="step"><strong>2. Persist</strong><span>API stores normalized state and fingerprint document.</span></div>
-            <div class="step"><strong>3. Queue</strong><span>SQS receives an identification job with DLQ retry policy.</span></div>
-            <div class="step"><strong>4. Match</strong><span>Go worker compares against seeded reference assets.</span></div>
-            <div class="step"><strong>5. Result</strong><span>API returns match details and rights policy.</span></div>
+            <div class="step"><strong>1. Submit</strong><span>Client posts media metadata + fingerprint hash to .NET API.</span></div>
+            <div class="step"><strong>2. Persist</strong><span>Stored in SQL Server (state) and MongoDB (document).</span></div>
+            <div class="step"><strong>3. Queue</strong><span>SQS receives job; DLQ retries on failure (max 3×).</span></div>
+            <div class="step"><strong>4. Match</strong><span>Go worker compares fingerprint against reference catalog.</span></div>
+            <div class="step"><strong>5. Result</strong><span>API returns match, confidence score, and rights policy.</span></div>
           </div>
         </section>
 
+        <!-- ── Running Services ── -->
         <section>
           <h2>Running Services</h2>
           <dl>
-            <dt>API</dt><dd><code>http://localhost:18080</code></dd>
-            <dt>PostgreSQL</dt><dd><code>localhost:15432</code></dd>
-            <dt>MongoDB</dt><dd><code>localhost:27018</code></dd>
-            <dt>LocalStack</dt><dd><code>localhost:4566</code></dd>
-            <dt>OpenTelemetry</dt><dd><code>localhost:14317 / 18889</code></dd>
-            <dt>Queue</dt><dd><code>content-id-job-queue</code></dd>
-            <dt>DLQ</dt><dd><code>content-id-job-dlq</code></dd>
+            <dt>API (.NET 8)</dt>    <dd><code>http://localhost:18080</code></dd>
+            <dt>SQL Server 2022</dt>   <dd><code>localhost:11433</code></dd>
+            <dt>MongoDB 7</dt>       <dd><code>localhost:27018</code></dd>
+            <dt>LocalStack</dt>      <dd><code>localhost:4566</code></dd>
+            <dt>OTel Collector</dt>  <dd><code>gRPC :14317 &nbsp;/&nbsp; Prom :18889</code></dd>
+            <dt>Job Queue</dt>       <dd><code>content-id-job-queue</code></dd>
+            <dt>DLQ</dt>             <dd><code>content-id-job-dlq</code></dd>
           </dl>
         </section>
-      </div>
 
-      <div class="result">
+        <!-- ── Live Results ── -->
         <section>
-          <h2>Sample Submission</h2>
-          <pre>{
-  "title": "Screenshot Demo Track",
-  "sourcePlatform": "PartnerUpload",
-  "contentType": "audio",
-  "durationSeconds": 191,
-  "fingerprintHash": "abc123"
+          <h2>Live Match Results</h2>
+          <div class="result-cols">
+            <div>
+              <div class="result-col-label"><span class="badge">matched</span> exact hit</div>
+              <pre>{
+  "submissionId": "9b8dab8f-...",
+  "status": "matched",
+  "matches": [{
+    "referenceAssetId": "ref-001",
+    "title": "Sample Song A",
+    "owner": "Example Music Group",
+    "rightsPolicy": "<span class="policy">monetize</span>",
+    "confidence": 0.99
+  }]
 }</pre>
+            </div>
+            <div>
+              <div class="result-col-label"><span class="badge-no-match">no_match</span> unknown</div>
+              <pre>{
+  "submissionId": "4231e0d0-...",
+  "status": "no_match",
+  "matches": []
+}
+
+<span style="color:var(--muted);font-size:11.5px;">No asset found above the 0.65
+prefix-similarity threshold.</span></pre>
+            </div>
+          </div>
         </section>
 
+        <!-- ── Tests & CI ── -->
         <section>
-          <h2>Processed Result</h2>
-          <p><span class="badge">matched</span></p>
-          <pre>{
-  "submissionId": "28255d89-8097-4fb9-932b-a9a592cd2c4b",
-  "referenceAssetId": "ref-001",
-  "title": "Sample Song A",
-  "owner": "Example Music Group",
-  "rightsPolicy": "<span class="policy">monetize</span>",
-  "confidence": 0.99
-}</pre>
+          <h2>Tests &amp; CI &nbsp;<span class="pass-badge">all passing</span></h2>
+
+          <div class="test-item">
+            <span class="pass-badge">✓ 9</span>
+            <div>
+              <div style="font-weight:600;">ContentId.Api &nbsp;<span style="color:var(--muted);font-weight:400;font-size:12px;">.NET / xUnit</span></div>
+              <div class="test-desc">create · content-type · duration · whitespace title · fingerprint normalisation · GET not found · GET round-trip · matches before worker · JSON camelCase contract</div>
+            </div>
+          </div>
+
+          <div class="test-item">
+            <span class="pass-badge">✓ 3</span>
+            <div>
+              <div style="font-weight:600;">content-match-worker-go &nbsp;<span style="color:var(--muted);font-weight:400;font-size:12px;">Go</span></div>
+              <div class="test-desc">exact match · no-match · fuzzy prefix boundary (0.65 threshold)</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+            <div class="ci-row"><span class="ci-label">Trigger</span><span class="ci-val">push / pull_request → main</span></div>
+            <div class="ci-row"><span class="ci-label">dotnet test</span><span class="ci-val">ContentIdPlatform.slnx — Release</span></div>
+            <div class="ci-row"><span class="ci-label">go test ./...</span><span class="ci-val">content-match-worker-go</span></div>
+            <div class="ci-row"><span class="ci-label">docker compose build</span><span class="ci-val">both service images</span></div>
+          </div>
         </section>
+
       </div>
     </main>
   </body>

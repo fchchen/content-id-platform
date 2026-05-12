@@ -6,7 +6,7 @@
 docker compose up --build
 ```
 
-The stack starts PostgreSQL, MongoDB, LocalStack, OpenTelemetry Collector, the .NET API, and the Go worker.
+The stack starts SQL Server, MongoDB, LocalStack, OpenTelemetry Collector, the .NET API, and the Go worker.
 
 ## Validate the Flow
 
@@ -47,7 +47,7 @@ docker compose exec localstack awslocal sqs send-message \
 
 ## Common Issues
 
-- API returns unhealthy: confirm PostgreSQL and MongoDB containers are healthy.
+- API returns unhealthy: confirm SQL Server and MongoDB containers are healthy.
 - Jobs stay queued: confirm LocalStack created `content-id-job-queue` and the worker container is running.
 - No matches returned: submit one of the seeded hashes from `data/reference-assets/reference-assets.json`.
 - Worker retries a message: inspect worker logs and DLQ state.

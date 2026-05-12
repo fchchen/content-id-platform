@@ -8,7 +8,7 @@ I built a simplified content identification platform inspired by the role. The A
 
 - The .NET API owns platform and business workflow concerns.
 - The Go worker represents the async matching path, where a real system might optimize for throughput and efficient processing.
-- PostgreSQL keeps normalized operational state easy to query.
+- SQL Server keeps normalized operational state easy to query.
 - MongoDB holds flexible fingerprint and raw match documents.
 - SQS decouples submission intake from matching work.
 - The DLQ gives a concrete production incident story for poison messages and replay.

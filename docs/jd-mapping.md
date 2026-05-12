@@ -5,7 +5,7 @@
 | C#/.NET backend systems and APIs | `ContentId.Api` exposes submission, status, match, health, and metrics endpoints. |
 | Go working knowledge | `content-match-worker-go` processes identification jobs asynchronously. |
 | MongoDB | Stores fingerprint documents and raw match documents. |
-| PostgreSQL / relational DB | Stores normalized submission state and match summaries. |
+| SQL Server / relational DB | Stores normalized submission state and match summaries. |
 | AWS SQS/SNS/S3 | LocalStack provisions SQS queue, DLQ, SNS topic, and S3 scratch bucket. |
 | OpenTofu/Terraform | `infra/opentofu` defines representative AWS resources. |
 | Docker Compose | Full local stack runs through `docker-compose.yml`. |

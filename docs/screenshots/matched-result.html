@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Match Result</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --border: #30363d;
+        --muted: #8b949e;
+        --text: #e6edf3;
+        --green: #3fb950;
+        --green-dim: #238636;
+        --teal: #79c0ff;
+        --yellow: #e3b341;
+        --orange: #ffa657;
+        --red: #ff7b72;
+        --purple: #d2a8ff;
+        --string: #a5d6ff;
+        --num: #79c0ff;
+        --bool: #ff7b72;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        color: var(--text);
+        padding: 32px 40px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .pane-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .pane {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .pane-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: #1c2128;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .method {
+        font-weight: 700;
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        color: #fff;
+      }
+      .method-post { background: #1a5e2a; color: #3fb950; border: 1px solid #238636; }
+      .method-get  { background: #1a3a5e; color: #79c0ff; border: 1px solid #1f6feb; }
+
+      .status {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--green);
+      }
+
+      .pane-body {
+        padding: 16px;
+      }
+
+      .s  { color: var(--string); }
+      .n  { color: var(--num); }
+      .k  { color: var(--purple); }
+      .p  { color: var(--muted); }
+      .b  { color: var(--bool); }
+      .badge-matched {
+        display: inline-block;
+        background: #0f3d1f;
+        color: var(--green);
+        border: 1px solid #238636;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 14px 0;
+      }
+
+      .confidence-bar-wrap {
+        margin-top: 4px;
+      }
+      .confidence-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .confidence-bar {
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .confidence-fill {
+        height: 100%;
+        width: 99%;
+        background: linear-gradient(90deg, #238636, #3fb950);
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="pane-row">
+
+      <!-- Left: request + submission response -->
+      <div style="display:flex; flex-direction:column; gap:20px;">
+
+        <div class="pane">
+          <div class="pane-header">
+            <span class="method method-post">POST</span>
+            <span>/v1/submissions</span>
+            <span class="status">201 Created</span>
+          </div>
+          <div class="pane-body">
+            <div class="label">Request Body</div>
+<pre><span class="p">{</span>
+  <span class="k">"title"</span><span class="p">:</span> <span class="s">"Interview Demo Track"</span><span class="p">,</span>
+  <span class="k">"sourcePlatform"</span><span class="p">:</span> <span class="s">"PartnerUpload"</span><span class="p">,</span>
+  <span class="k">"contentType"</span><span class="p">:</span> <span class="s">"audio"</span><span class="p">,</span>
+  <span class="k">"durationSeconds"</span><span class="p">:</span> <span class="n">191</span><span class="p">,</span>
+  <span class="k">"fingerprintHash"</span><span class="p">:</span> <span class="s">"abc123"</span>
+<span class="p">}</span></pre>
+            <hr class="divider">
+            <div class="label">Response</div>
+<pre><span class="p">{</span>
+  <span class="k">"submissionId"</span><span class="p">:</span> <span class="s">"9b8dab8f-77cb-45a7-8a4c-5e1954e05c12"</span><span class="p">,</span>
+  <span class="k">"status"</span><span class="p">:</span> <span class="s">"queued"</span><span class="p">,</span>
+  <span class="k">"fingerprintHash"</span><span class="p">:</span> <span class="s">"abc123"</span><span class="p">,</span>
+  <span class="k">"createdAt"</span><span class="p">:</span> <span class="s">"2026-05-05T18:10:29Z"</span>
+<span class="p">}</span></pre>
+          </div>
+        </div>
+
+        <div class="pane">
+          <div class="pane-header">
+            <span class="method method-get">GET</span>
+            <span>/v1/submissions/{id}</span>
+            <span class="status">200 OK</span>
+          </div>
+          <div class="pane-body">
+<pre><span class="p">{</span>
+  <span class="k">"submissionId"</span><span class="p">:</span> <span class="s">"9b8dab8f-77cb-45a7-8a4c-5e1954e05c12"</span><span class="p">,</span>
+  <span class="k">"title"</span><span class="p">:</span> <span class="s">"Interview Demo Track"</span><span class="p">,</span>
+  <span class="k">"sourcePlatform"</span><span class="p">:</span> <span class="s">"PartnerUpload"</span><span class="p">,</span>
+  <span class="k">"contentType"</span><span class="p">:</span> <span class="s">"audio"</span><span class="p">,</span>
+  <span class="k">"durationSeconds"</span><span class="p">:</span> <span class="n">191</span><span class="p">,</span>
+  <span class="k">"fingerprintHash"</span><span class="p">:</span> <span class="s">"abc123"</span><span class="p">,</span>
+  <span class="k">"status"</span><span class="p">:</span> <span class="s">"matched"</span>
+<span class="p">}</span></pre>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: match result -->
+      <div class="pane">
+        <div class="pane-header">
+          <span class="method method-get">GET</span>
+          <span>/v1/submissions/{id}/matches</span>
+          <span class="status">200 OK</span>
+        </div>
+        <div class="pane-body">
+          <div class="badge-matched">&#10003; matched</div>
+<pre><span class="p">{</span>
+  <span class="k">"submissionId"</span><span class="p">:</span> <span class="s">"9b8dab8f-77cb-45a7-8a4c-5e1954e05c12"</span><span class="p">,</span>
+  <span class="k">"status"</span><span class="p">:</span> <span class="s">"matched"</span><span class="p">,</span>
+  <span class="k">"matches"</span><span class="p">: [</span>
+    <span class="p">{</span>
+      <span class="k">"referenceAssetId"</span><span class="p">:</span> <span class="s">"ref-001"</span><span class="p">,</span>
+      <span class="k">"title"</span><span class="p">:</span> <span class="s">"Sample Song A"</span><span class="p">,</span>
+      <span class="k">"owner"</span><span class="p">:</span> <span class="s">"Example Music Group"</span><span class="p">,</span>
+      <span class="k">"rightsPolicy"</span><span class="p">:</span> <span class="s">"monetize"</span><span class="p">,</span>
+      <span class="k">"confidence"</span><span class="p">:</span> <span class="n">0.99</span><span class="p">,</span>
+      <span class="k">"fingerprintHash"</span><span class="p">:</span> <span class="s">"abc123"</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span></pre>
+
+          <hr class="divider">
+          <div class="confidence-bar-wrap">
+            <div class="confidence-label">Confidence &mdash; exact fingerprint match</div>
+            <div class="confidence-bar"><div class="confidence-fill"></div></div>
+            <div style="font-size:12px; color: var(--green); margin-top:4px; font-weight:700;">0.99 / 1.00</div>
+          </div>
+
+          <hr class="divider">
+          <div style="font-size:12px; color:var(--muted); line-height:1.7;">
+            <div><span style="color:var(--text);">Worker path:</span> &nbsp;SQS receive → SQL Server update → findMatches() → upsert match_results → MongoDB doc → SQL Server status</div>
+            <div style="margin-top:6px;"><span style="color:var(--text);">Delivery guarantee:</span> &nbsp;at-least-once via SQS redrive (maxReceiveCount=3 → DLQ)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </body>
+</html>

@@ -10,3 +10,4 @@ obj/
 
 .DS_Store
 *.log
+src/content-match-worker-go/content-match-worker-go
