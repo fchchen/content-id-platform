@@ -4,9 +4,12 @@ obj/
 .idea/
 .vscode/
 
-.terraform/
+**/.terraform/
+**/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
+*.tfvars
+*.tfvars.json
 
 .DS_Store
 *.log
