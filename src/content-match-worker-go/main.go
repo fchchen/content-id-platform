@@ -14,6 +14,9 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 const (
@@ -48,6 +51,17 @@ func main() {
 	} else {
 		defer shutdown(context.Background())
 	}
+
+	shutdownMetrics, err := configureMetrics(ctx)
+	if err != nil {
+		logger.Warn("metrics disabled", "error", err)
+	} else {
+		defer shutdownMetrics(context.Background())
+	}
+
+	meter := otel.Meter("content-match-worker-go")
+	jobsProcessed, _ := meter.Int64Counter("worker.jobs.processed",
+		metric.WithDescription("Identification jobs processed by the worker"))
 
 	cfg := loadConfig()
 	assets, err := loadReferenceAssets(cfg.ReferenceAssetsPath)
@@ -99,10 +113,13 @@ func main() {
 				continue
 			}
 
-			if err := processMessage(ctx, logger, db, mongoClient, cfg, assets, *message.Body); err != nil {
+			result, err := processMessage(ctx, logger, db, mongoClient, cfg, assets, *message.Body)
+			if err != nil {
+				jobsProcessed.Add(ctx, 1, metric.WithAttributes(attribute.String("result", "error")))
 				logger.Error("job failed; message will be retried by sqs", "error", err)
 				continue
 			}
+			jobsProcessed.Add(ctx, 1, metric.WithAttributes(attribute.String("result", result)))
 
 			_, err = sqsClient.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 				QueueUrl:      aws.String(queueURL),

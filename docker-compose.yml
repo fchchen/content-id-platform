@@ -62,6 +62,35 @@ services:
       retries: 20
     logging: *default-logging
 
+  tempo:
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo-config.yml:/etc/tempo.yaml:ro
+    logging: *default-logging
+
+  loki:
+    image: grafana/loki:latest
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./observability/loki-config.yml:/etc/loki/config.yaml:ro
+    logging: *default-logging
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    ports:
+      - "13000:3000"
+    depends_on:
+      - tempo
+      - loki
+      - otel-collector
+    logging: *default-logging
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.114.0
     command: ["--config=/etc/otelcol/config.yaml"]
@@ -71,6 +100,9 @@ services:
       - "14317:4317"
       - "14318:4318"
       - "18889:8889"
+    depends_on:
+      - tempo
+      - loki
     logging: *default-logging
 
   contentid-api:

@@ -23,17 +23,17 @@ func processMessage(
 	cfg appConfig,
 	assets []referenceAsset,
 	body string,
-) error {
+) (string, error) {
 	tracer := otel.Tracer("content-match-worker-go")
 	ctx, span := tracer.Start(ctx, "worker.process_identification_job")
 	defer span.End()
 
 	var message identificationJobMessage
 	if err := json.Unmarshal([]byte(body), &message); err != nil {
-		return err
+		return "", err
 	}
 	if message.SubmissionID == "" {
-		return errors.New("missing submissionId")
+		return "", errors.New("missing submissionId")
 	}
 	logger = logger.With("submission_id", message.SubmissionID)
 	span.SetAttributes(
@@ -46,7 +46,7 @@ func processMessage(
 	if _, err := db.ExecContext(queryCtx,
 		"update submissions set status = 'processing', updated_at = sysutcdatetime() where submission_id = @p1",
 		message.SubmissionID); err != nil {
-		return err
+		return "", err
 	}
 
 	matches := findMatches(message.FingerprintHash, assets)
@@ -56,7 +56,7 @@ func processMessage(
 	}
 
 	if err := writeMatches(ctx, db, message.SubmissionID, matches); err != nil {
-		return err
+		return "", err
 	}
 
 	statusCtx, statusCancel := context.WithTimeout(ctx, queryTimeout)
@@ -64,7 +64,7 @@ func processMessage(
 	if _, err := db.ExecContext(statusCtx,
 		"update submissions set status = @p1, updated_at = sysutcdatetime() where submission_id = @p2",
 		status, message.SubmissionID); err != nil {
-		return err
+		return "", err
 	}
 
 	mongoCtx, mongoCancel := context.WithTimeout(ctx, queryTimeout)
@@ -78,11 +78,11 @@ func processMessage(
 		"processedAt":     time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	logger.Info("processed identification job", "submissionId", message.SubmissionID, "status", status, "matches", len(matches))
-	return nil
+	return status, nil
 }
 
 func writeMatches(ctx context.Context, db *sql.DB, submissionID string, matches []matchResult) error {

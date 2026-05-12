@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using ContentId.Api;
 using ContentId.Api.Infrastructure;
 using ContentId.Api.Models;
 using ContentId.Api.Services;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -12,7 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ContentIdOptions>(builder.Configuration.GetSection(ContentIdOptions.SectionName));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+var apiMeter = new Meter("ContentId.Api");
+var submissionsCreated = apiMeter.CreateCounter<long>("contentid.submissions.created", "count", "Total submissions received");
+
 builder.Services.AddSingleton(new ActivitySource("ContentId.Api"));
+builder.Services.AddSingleton(apiMeter);
 
 if (builder.Environment.IsEnvironment("Testing"))
 {
@@ -41,6 +47,12 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource("ContentId.Api");
         tracing.AddAspNetCoreInstrumentation();
         tracing.AddOtlpExporter();
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics.AddMeter("Microsoft.AspNetCore.Hosting");
+        metrics.AddMeter("ContentId.Api");
+        metrics.AddOtlpExporter();
     })
     .WithLogging(logging => logging.AddOtlpExporter());
 
@@ -75,9 +87,12 @@ app.MapPost("/v1/submissions", async (
     CancellationToken cancellationToken) =>
 {
     var result = await service.CreateSubmissionAsync(request, cancellationToken);
-    return result.IsValid
-        ? Results.Created($"/v1/submissions/{result.Submission!.SubmissionId}", result.Submission)
-        : Results.ValidationProblem(result.Errors);
+    if (result.IsValid)
+    {
+        submissionsCreated.Add(1);
+        return Results.Created($"/v1/submissions/{result.Submission!.SubmissionId}", result.Submission);
+    }
+    return Results.ValidationProblem(result.Errors);
 })
 .WithName("CreateSubmission")
 .WithOpenApi();
